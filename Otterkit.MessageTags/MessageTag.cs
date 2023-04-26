@@ -21,28 +21,33 @@ public readonly struct MessageTag
     private static readonly MessageTag NullInstance = new(false);
     public static MessageTag NullTag => NullInstance;
 
-    public readonly byte[] Message { get; init; }
+    public readonly Memory<byte> Message { get; init; }
 
     public MessageTag(ReadOnlySpan<byte> mcs, ReadOnlySpan<byte> method, ReadOnlySpan<byte> origin)
     {
         Message = new byte[43 + origin.Length];
 
-        Message.AsSpan(0, 42).Fill(32);
+        Message.Span.Slice(0, 42).Fill(32);
 
-        mcs.CopyTo(Message.AsSpan());
+        mcs.CopyTo(Message.Span);
 
-        method.CopyTo(Message.AsSpan().Slice(27));
+        method.CopyTo(Message.Span.Slice(27));
 
-        origin.CopyTo(Message.AsSpan().Slice(42));
+        origin.CopyTo(Message.Span.Slice(42));
 
-        Message[Message.Length - 1] = 0;
+        Message.Span[Message.Length - 1] = 0;
     }
 
     public MessageTag(ReadOnlySpan<byte> message)
     {
         Message = new byte[message.Length];
 
-        message.CopyTo(Message);
+        message.CopyTo(Message.Span);
+    }
+
+    public MessageTag(Memory<byte> message)
+    {
+        Message = message;
     }
 
     public MessageTag(bool useStaticInstance)
@@ -63,22 +68,22 @@ public readonly struct MessageTag
 
     public ReadOnlySpan<byte> Mcs
     {
-        get => Message.AsSpan(0, 26);
+        get => Message.Span.Slice(0, 26);
     }
 
     public ReadOnlySpan<byte> Method
     {
-        get => Message.AsSpan(27, 14);
+        get => Message.Span.Slice(27, 14);
     }
 
     public ReadOnlySpan<byte> Origin
     {
-        get => Message.AsSpan(42);
+        get => Message.Span.Slice(42);
     }
 
     public override string ToString()
     {
-        return Encoding.UTF8.GetString(Message);
+        return Encoding.UTF8.GetString(Message.Span);
     }
 
     public string ToString(ReadOnlySpan<char> part)
