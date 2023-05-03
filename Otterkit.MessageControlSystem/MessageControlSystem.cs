@@ -1,11 +1,32 @@
-using Otterkit.MessageHandling;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
-var builder = WebApplication.CreateBuilder(args);
+string OtterSock = $"{Path.GetTempPath()}otter.sock";
 
-var app = builder.Build(); 
+if (File.Exists(OtterSock)) File.Delete(OtterSock);
 
-app.UseWebSockets();
+var builder = WebApplication.CreateBuilder();
 
-app.Map("/mcs", async context => await MessageHandler.HandleConnection(context));
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5114, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+        listenOptions.UseHttps();
+    });
 
-app.Run();
+    options.ListenUnixSocket(OtterSock, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+    });
+});
+
+var mcs = builder.Build();
+
+if (mcs.Environment.IsDevelopment())
+{
+    mcs.UseDeveloperExceptionPage();
+}
+
+mcs.MapGet("/", () => "Hello from both IP and Unix sockets!");
+
+mcs.Run();
