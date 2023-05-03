@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Otterkit.MessageTags;
 
 string OtterSock = $"{Path.GetTempPath()}otter.sock";
 
@@ -8,7 +9,7 @@ var builder = WebApplication.CreateBuilder();
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5114, listenOptions =>
+    options.ListenAnyIP(5151, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
         listenOptions.UseHttps();
@@ -27,6 +28,11 @@ if (mcs.Environment.IsDevelopment())
     mcs.UseDeveloperExceptionPage();
 }
 
-mcs.MapGet("/", () => "Hello from both IP and Unix sockets!");
+var tag = MessageTag.Null;
+
+mcs.MapGet("/", async (HttpResponse response) => 
+{
+    var result = await response.BodyWriter.WriteAsync(tag.Message);
+});
 
 mcs.Run();
