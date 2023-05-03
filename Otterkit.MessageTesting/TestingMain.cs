@@ -1,8 +1,17 @@
-﻿using Otterkit.MessageTags;
-using System.Text;
+﻿using System.Text;
+using Otterkit.MessageTags;
+using Otterkit.MessageClients;
 
-var tag = new MessageTag();
+var client = new MessageClient("https://localhost");
 
-var serverTag = new MessageTag("MCS:oRPibtpJ90WdDsVLTwxw1g METHOD:RECEIVE ORIGIN:local-server-name"u8);
+var receive = await client.ReceiveAsync("/");
+
+var tag = new MessageTag("SEND ORIGIN:LOCAL ROUTE:ping DATA:MCS PING!"u8);
+
+var send = await client.SendAsync("/send", tag);
+
+Console.WriteLine(Encoding.UTF8.GetString(receive.Span));
+
+Console.WriteLine(Encoding.UTF8.GetString(send.Span));
 
 
