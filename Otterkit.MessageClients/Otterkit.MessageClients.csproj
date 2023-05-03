@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../Otterkit.MessageTags/Otterkit.MessageTags.csproj" />
+  </ItemGroup>
+
 </Project>

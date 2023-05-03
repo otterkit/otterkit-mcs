@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Otterkit.MessageTags/Otterkit.MessageTags.csproj" />
+    <ProjectReference Include="../Otterkit.MessageClients/Otterkit.MessageClients.csproj" />
   </ItemGroup>
 
 </Project>
