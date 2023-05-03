@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Otterkit.MessageTags;
 
 public readonly struct MessageTag
@@ -7,18 +5,13 @@ public readonly struct MessageTag
     private static readonly MessageTag NullInstance = new(false);
     public static MessageTag Null => NullInstance;
 
-    public readonly Memory<byte> Message { get; init; }
+    public readonly byte[] Message { get; init; }
 
     public MessageTag(ReadOnlySpan<byte> message)
     {
         Message = new byte[message.Length];
 
-        message.CopyTo(Message.Span);
-    }
-
-    public MessageTag(Memory<byte> message)
-    {
-        Message = message;
+        message.CopyTo(Message);
     }
 
     public MessageTag(bool useStaticInstance)
