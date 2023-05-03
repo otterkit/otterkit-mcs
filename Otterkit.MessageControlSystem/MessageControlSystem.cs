@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Otterkit.MessageControlSystem;
 using Otterkit.MessageTags;
 
 string OtterSock = $"{Path.GetTempPath()}otter.sock";
@@ -18,6 +19,7 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenUnixSocket(OtterSock, listenOptions =>
     {
         listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+        listenOptions.UseHttps();
     });
 });
 
@@ -28,11 +30,18 @@ if (mcs.Environment.IsDevelopment())
     mcs.UseDeveloperExceptionPage();
 }
 
-var tag = MessageTag.Null;
+var mcsTag = new MessageTag("MCS STATUS:ONLINE"u8);
 
 mcs.MapGet("/", async (HttpResponse response) => 
 {
-    var result = await response.BodyWriter.WriteAsync(tag.Message);
+    var result = await response.BodyWriter.WriteAsync(mcsTag.Message);
+});
+
+mcs.MapPost("/send", async (HttpRequest request, HttpResponse response) => 
+{
+    var readResult = await request.BodyReader.ReadAllAsync();
+
+    var result = await response.BodyWriter.WriteAsync(readResult);
 });
 
 mcs.Run();
