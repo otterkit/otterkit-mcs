@@ -6,6 +6,8 @@ public static class MainThread
 
     public static void Main(string[] args)
     {
+        using var mutexLock = HandleMutexLock("Otterkit MCS");
+
         var unixSocket = new UnixSocketThread(OtterSock);
 
         unixSocket.StartThread();
@@ -20,5 +22,18 @@ public static class MainThread
         }
 
         unixSocket.StopThread().AwaitResult();
+    }
+
+    private static Mutex HandleMutexLock(string mutexName)
+    {
+        var mutex = new Mutex(false, $"""Global\{mutexName}""");
+
+        if (!mutex.WaitOne(0))
+        {
+            Console.WriteLine("[Otterkit MCS]: An MCS instance is already running on this machine.");
+            Environment.Exit(0);
+        }
+
+        return mutex;
     }
 }
