@@ -66,9 +66,9 @@ public class UnixSocketThread
             }
             else
             {
-                var error = "MCS ERROR:EC-MCS-INVALID-TAG"u8.ToArray().AsMemory();
+                var invalid = StatusMessages.InvalidTag;
 
-                await socket.SendAsync(error, token);
+                await socket.SendAsync(invalid.Message, token);
             }
         }
         finally
