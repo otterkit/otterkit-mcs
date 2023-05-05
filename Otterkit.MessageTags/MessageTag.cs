@@ -1,28 +1,19 @@
 namespace Otterkit.MessageTags;
 
-public readonly struct MessageTag
+public readonly partial struct MessageTag
 {
-    private static readonly MessageTag NullInstance = new(false);
-    public static MessageTag Null => NullInstance;
+    public static readonly MessageTag Null = new("NULL"u8);
 
-    public readonly byte[] Message { get; init; }
+    public readonly ReadOnlyMemory<byte> Message { get; init; }
 
     public MessageTag(ReadOnlySpan<byte> message)
     {
-        Message = new byte[message.Length];
-
-        message.CopyTo(Message);
+        Message = message.ToArray();
     }
 
-    public MessageTag(bool useStaticInstance)
+    public MessageTag(ReadOnlyMemory<byte> message)
     {
-        if (useStaticInstance)
-        {
-            this = Null;
-            return;
-        }
-
-        this = new("NULL"u8);
+        Message = message;
     }
 
     public MessageTag()
