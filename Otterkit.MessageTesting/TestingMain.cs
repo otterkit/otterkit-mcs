@@ -10,30 +10,31 @@ async Task RunClient(string message)
     var endpoint = new UnixDomainSocketEndPoint($"{Path.GetTempPath()}otter.sock");
 
     await client.ConnectAsync(endpoint);
-    while (true)
+
+    var messageBytes = Encoding.UTF8.GetBytes(message);
+
+    await client.SendAsync(messageBytes, CancellationToken.None);
+
+    Console.WriteLine($"Ping message: \"{message}\"");
+
+    var buffer = new byte[4096];
+
+    var received = await client.ReceiveAsync(buffer, CancellationToken.None);
+
+    var memory = buffer.AsMemory().Slice(0, received);
+
+    var response = Encoding.UTF8.GetString(memory.Span);
+
+    if (response.EndsWith("EOM"))
     {
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-        _ = await client.SendAsync(messageBytes, SocketFlags.None);
-        Console.WriteLine($"Ping message: \"{message}\"");
-
-        // Receive ack.
-        var buffer = new byte[1024];
-
-        var received = await client.ReceiveAsync(buffer, SocketFlags.None);
-        var response = Encoding.UTF8.GetString(buffer, 0, received);
-
-        if (response.EndsWith("EOM"))
-        {
-            Console.WriteLine($"Pong: \"{response}\"");
-            break;
-        }
-        else
-        {
-            Console.WriteLine($"Error: \"{response}\"");
-            break;
-        }
-        
+        Console.WriteLine($"Pong: \"{response}\"");
     }
-
+    else
+    {
+        Console.WriteLine($"Error: \"{response}\"");
+    }
+    
     client.Shutdown(SocketShutdown.Both);
+
+    client.Dispose();
 }

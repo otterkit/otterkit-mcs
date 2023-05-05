@@ -1,9 +1,6 @@
-﻿using System.Net.Sockets;
-using System.Text;
+﻿namespace Otterkit.MessageControlSystem;
 
-namespace Otterkit.MessageControlSystem;
-
-public static class MessageControlSystem
+public static class MainThread
 {
     static string OtterSock = $"{Path.GetTempPath()}otter.sock";
 
