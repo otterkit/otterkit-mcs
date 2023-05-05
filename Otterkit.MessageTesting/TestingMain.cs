@@ -1,17 +1,39 @@
 ﻿using System.Text;
-using Otterkit.MessageTags;
-using Otterkit.MessageClients;
+using System.Net.Sockets;
 
-var client = new MessageClient("https://localhost");
+await Task.WhenAll(RunClient(args[0]), RunClient(args[0]), RunClient(args[0]), RunClient(args[0]));
 
-var receive = await client.ReceiveAsync("/");
+async Task RunClient(string message)
+{
+    using Socket client = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
 
-var tag = new MessageTag("SEND ORIGIN:LOCAL ROUTE:ping DATA:MCS PING!"u8);
+    var endpoint = new UnixDomainSocketEndPoint($"{Path.GetTempPath()}otter.sock");
 
-var send = await client.SendAsync("/send", tag);
+    await client.ConnectAsync(endpoint);
+    while (true)
+    {
+        var messageBytes = Encoding.UTF8.GetBytes(message);
+        _ = await client.SendAsync(messageBytes, SocketFlags.None);
+        Console.WriteLine($"Ping message: \"{message}\"");
 
-Console.WriteLine(Encoding.UTF8.GetString(receive.Span));
+        // Receive ack.
+        var buffer = new byte[1024];
 
-Console.WriteLine(Encoding.UTF8.GetString(send.Span));
+        var received = await client.ReceiveAsync(buffer, SocketFlags.None);
+        var response = Encoding.UTF8.GetString(buffer, 0, received);
 
+        if (response.EndsWith("EOM"))
+        {
+            Console.WriteLine($"Pong: \"{response}\"");
+            break;
+        }
+        else
+        {
+            Console.WriteLine($"Error: \"{response}\"");
+            break;
+        }
+        
+    }
 
+    client.Shutdown(SocketShutdown.Both);
+}

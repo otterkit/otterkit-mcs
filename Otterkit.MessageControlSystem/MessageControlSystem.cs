@@ -1,47 +1,27 @@
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Otterkit.MessageControlSystem;
-using Otterkit.MessageTags;
+﻿using System.Net.Sockets;
+using System.Text;
 
-string OtterSock = $"{Path.GetTempPath()}otter.sock";
+namespace Otterkit.MessageControlSystem;
 
-if (File.Exists(OtterSock)) File.Delete(OtterSock);
-
-var builder = WebApplication.CreateBuilder();
-
-builder.WebHost.ConfigureKestrel(options =>
+public static class MessageControlSystem
 {
-    options.ListenAnyIP(5151, listenOptions =>
+    static string OtterSock = $"{Path.GetTempPath()}otter.sock";
+
+    public static void Main(string[] args)
     {
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-        listenOptions.UseHttps();
-    });
+        var unixSocket = new UnixSocketThread(OtterSock);
 
-    options.ListenUnixSocket(OtterSock, listenOptions =>
-    {
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-        listenOptions.UseHttps();
-    });
-});
+        unixSocket.StartThread();
 
-var mcs = builder.Build();
+        Console.WriteLine("[Otterkit MCS]: Press (ESC) to stop server...");
 
-if (mcs.Environment.IsDevelopment())
-{
-    mcs.UseDeveloperExceptionPage();
+        var waitkey = Console.ReadKey(true);
+
+        while (waitkey.Key != ConsoleKey.Escape)
+        {
+            waitkey = Console.ReadKey(true);
+        }
+
+        unixSocket.StopThread().AwaitResult();
+    }
 }
-
-var mcsTag = new MessageTag("MCS STATUS:ONLINE"u8);
-
-mcs.MapGet("/", async (HttpResponse response) => 
-{
-    var result = await response.BodyWriter.WriteAsync(mcsTag.Message);
-});
-
-mcs.MapPost("/send", async (HttpRequest request, HttpResponse response) => 
-{
-    var readResult = await request.BodyReader.ReadAllAsync();
-
-    var result = await response.BodyWriter.WriteAsync(readResult);
-});
-
-mcs.Run();
